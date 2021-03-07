@@ -1,1 +1,2 @@
-# Personal blog
+# gregor812.me
+Personal blog
