@@ -9,37 +9,59 @@
         <h1>Создание проекта Entity Framework Core с размещение DbContext и миграций в отдельной сборке</h1>
         <hr />
         <h2>Идея</H2>
-        <p>
-            Однажды мне захотелось разделить сборки в солюшене таким образом, чтобы избежать определения DbContext внутри сборки приложения.
-            Получилось три сборки: модели сущностей, DbContext и приложением.
-            В процессе разделения возникли некоторые сложности, в связи с чем я хотел бы облегчить жизнь тем, кто захочет сделать то же самое,
-            поэтому спешу поделиться порядком действий, которые я предпринял для реализации своей идеи.
-        </p>
+        Однажды мне захотелось разделить сборки в солюшене таким образом, чтобы избежать определения DbContext внутри сборки приложения.
+        Получилось три сборки: модели сущностей, DbContext и приложением.
+        В процессе разделения возникли некоторые сложности, в связи с чем я хотел бы облегчить жизнь тем, кто захочет сделать то же самое,
+        поэтому спешу поделиться порядком действий, которые я предпринял для реализации своей идеи.
         <h2>Кратко для тех, кто хочет побыстрее</h2>
-        <div class="code-block">
-            <p><code>
-                mkdir Ef.Sandbox && cd Ef.Sandbox<br>
-                dotnet new sln<br>
-                dotnet new console -o Ef.Sandbox.App -f net5.0<br>
-                dotnet new classlib -o Ef.Sandbox.Entities -f net5.0<br>
-                dotnet new classlib -o Ef.Sandbox.Dal -f net5.0<br>
-                dotnet sln Ef.Sandbox.sln add Ef.Sandbox.App\Ef.Sandbox.App.csproj<br>
-                dotnet sln Ef.Sandbox.sln add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj<br>
-                dotnet sln Ef.Sandbox.sln add Ef.Sandbox.Entities\Ef.Sandbox.Entities.csproj<br>
-                dotnet add Ef.Sandbox.App\Ef.Sandbox.App.csproj reference Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj Ef.Sandbox.Entities\Ef.Sandbox.Entities.csproj<br>
-                dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj reference Ef.Sandbox.Entities\Ef.Sandbox.Entities.csproj<br>
-                Dal dotnet add package Microsoft.EntityFrameworkCore<br>
-                Dal dotnet add package Microsoft.EntityFrameworkCore.Design<br>
-                Dal dotnet add package Microsoft.Extensions.Configuration<br>
-                Dal dotnet add package Microsoft.Extensions.Configuration.Json<br>
-                Dal dotnet add package Npgsql.EntityFrameworkCore.PostgreSQL<br>
-                App dotnet add package Microsoft.EntityFrameworkCore<br>
-                dotnet build<br>
-                добавили модели<br>
-                dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Microsoft.EntityFrameworkCore.Tools.DotNet<br>
-                переделать на DotNetCliToolReference
-            </code></p>
-        </div>
-        <p>Параграф 3</p>
+        Создаём каталог для нового солюшена и переходим в него
+        <p><div class="code-block"><code>mkdir Ef.Sandbox && cd Ef.Sandbox</code></div></p>
+        Создаём новый солюшен
+        <p><div class="code-block"><code>dotnet new sln</code></div></p>
+        Создаём проект приложения, моделей сущностей, контекста и добавляем их в солюшен
+        <p><div class="code-block"><code>
+            dotnet new console -o Ef.Sandbox.App -f net5.0<br>
+            dotnet new classlib -o Ef.Sandbox.Entities -f net5.0<br>
+            dotnet new classlib -o Ef.Sandbox.Dal -f net5.0<br>
+            dotnet sln Ef.Sandbox.sln add Ef.Sandbox.App\Ef.Sandbox.App.csproj<br>
+            dotnet sln Ef.Sandbox.sln add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj<br>
+            dotnet sln Ef.Sandbox.sln add Ef.Sandbox.Entities\Ef.Sandbox.Entities.csproj
+        </code></div></p>
+        Добавляем необходимые ссылки проектов друг на друга
+        <p><div class="code-block"><code>
+            dotnet add Ef.Sandbox.App\Ef.Sandbox.App.csproj reference Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj Ef.Sandbox.Entities\Ef.Sandbox.Entities.csproj<br>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj reference Ef.Sandbox.Entities\Ef.Sandbox.Entities.csproj
+        </code></div></p>
+        Добавляем необходимые пакеты в проекты
+        <p><div class="code-block"><code>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Microsoft.EntityFrameworkCore<br>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Microsoft.EntityFrameworkCore.Design<br>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Microsoft.Extensions.Configuration<br>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Microsoft.Extensions.Configuration.Json<br>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Npgsql.EntityFrameworkCore.PostgreSQL<br>
+            dotnet add Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj package Microsoft.EntityFrameworkCore.Tools.DotNet<br>
+            dotnet add Ef.Sandbox.App\Ef.Sandbox.App.csproj package Microsoft.EntityFrameworkCore
+        </code></div></p>
+        Открываем файл Ef.Sandbox.Dal\Ef.Sandbox.Dal.csproj в редакторе и правим его следующим образом:<br>
+        <ol>
+            <li>Копируем строку</li>
+            <div class="code-block"><code>&lt;PackageReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="тут ваша версия" /&gt;</code></div>
+            <li>Добавляем отдельный ItemGroup, внутри которого вставляем скопированную ссылку на пакет</li>
+            <div class="code-block"><code>
+                &lt;ItemGroup&gt;<br>
+                <pre>    &lt;PackageReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="тут ваша версия" /&gt;</pre><br>
+                &lt;/ItemGroup&gt;<br>
+            </code></div>
+            <li>Заменяем PackageReference на DotNetCliToolReference, так чтобы получилось</li>
+            <div class="code-block"><code>&lt;DotNetCliToolReference Include="Microsoft.EntityFrameworkCore.Tools.DotNet" Version="тут ваша версия" /&gt;</code></div>
+            <li>Удаляем строку, скопированную в п.1, целиком из файла</li>
+        </ol>
+        Делаем восстановление пакетов
+        <p><div class="code-block"><code>dotnet restore</code></div></p>
+        Добавляем модели и контекст в соответствующие проекты
+        <p><div class="code-block"><code>добавили модели</code></div></p>
+        Запускаем контейнер с postgres
+        <p><div class="code-block"><code>docker run -d -p5432:5432 -e POSTGRES_PASSWORD=postgres postgres</code></div></p>
+        Добавляем в проект с контекстом реализацию интерфейса IDesignTimeDbContextFactory
     </body>
 </html>

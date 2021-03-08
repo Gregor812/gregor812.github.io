@@ -1,8 +1,11 @@
-.code-block { 
-    background-color: lightgray;
-    display: inline-block;
+body {
+    background-color: #202020;
+    color: #80F080;
 }
 
-p {
-    margin: 1rem 1rem;
+.code-block { 
+    background-color: black;
+    color: #80F080;
+    display: inline-block;
+    padding: 1rem 1rem;
 }
