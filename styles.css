@@ -1,0 +1,11 @@
+body {
+    background-color: #202020;
+    color: #80F080;
+}
+
+.code-block { 
+    background-color: black;
+    color: #80F080;
+    display: inline-block;
+    padding: 1rem 1rem;
+}
